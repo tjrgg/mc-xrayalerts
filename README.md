@@ -6,7 +6,8 @@
 
 ## Features
 
-- **Configurable Alerts**: Customize the messages sent to staff when a player finds a monitored item or ore. Messages support color and formatting codes.
+- **Configurable Alerts**: Customize the messages sent to staff or to the logs when a player finds a 
+  monitored block. Messages support color and formatting codes.
 - **Vein Detection Mode**: Choose between two modes:
     - **Block Mode**: Sends an alert for each block mined, indicating the number of items dropped.
     - **Vein Mode**: Sends one alert for the entire vein when the first block in the vein is mined.
@@ -14,10 +15,10 @@
 
 ## Commands
 
-### `/xrayalerts toggle`
+### `/xrayalerts`
 Toggles the x-ray alerts on or off for the player who runs the command.\
 **Permission**: `xrayalerts.toggle`\
-**Usage**: `/xrayalerts toggle`
+**Usage**: `/xrayalerts`
 
 ## Permissions
 
@@ -29,9 +30,13 @@ Toggles the x-ray alerts on or off for the player who runs the command.\
 
 ### `config.yml`
 ```yaml
-alert-message: "&c&lX-Ray&r &7%player% found &6x%count% %item%."
+alert-message: "&c&lX-Ray&r &7%player% found &6%count% %item% at (%blockX%, %blockY%, %blockZ%)."
+alert-log: "%player% found %count% %item% at (%blockX%, %blockY%, %blockZ%)."
 
-mode: "block" # Options: "block", "vein"
+mode: "BLOCK" # Options: "BLOCK", "VEIN".
+
+# Log X-ray alert notifications.
+log: true
 
 monitored-blocks:
   - ANCIENT_DEBRIS
@@ -45,4 +50,4 @@ monitored-blocks:
 
 ---
 ## License
-Copyright © 2024 [Tyler Richards](https://github.com/tjrgg). [MIT License](LICENSE).
+Copyright © 2025 [Tyler Richards](https://github.com/tjrgg). [MIT License](LICENSE).

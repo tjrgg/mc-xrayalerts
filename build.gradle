@@ -10,7 +10,10 @@ group = 'gg.tjr.mc.xrayalerts'
 version = '1.0.0'
 
 repositories {
-    maven { url = 'https://papermc.io/repo/repository/maven-public/' }
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
     mavenCentral()
 }
 

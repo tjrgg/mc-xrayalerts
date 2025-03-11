@@ -2,6 +2,7 @@ package gg.tjr.mc.xrayalerts;
 
 import gg.tjr.mc.xrayalerts.commands.XRayAlertsCommand;
 import gg.tjr.mc.xrayalerts.listeners.OreMineListener;
+import gg.tjr.mc.xrayalerts.listeners.PlayerJoinListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class XRayAlertsPlugin extends JavaPlugin {
@@ -14,9 +15,12 @@ public class XRayAlertsPlugin extends JavaPlugin {
 
         saveDefaultConfig();
 
-        getCommand("xrayalerts").setExecutor(new XRayAlertsCommand());
+        Settings settings = new Settings(getConfig());
 
-        getServer().getPluginManager().registerEvents(new OreMineListener(), this);
+        getCommand("xrayalerts").setExecutor(new XRayAlertsCommand(settings));
+
+        getServer().getPluginManager().registerEvents(new OreMineListener(settings), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(settings), this);
 
         getLogger().info("Plugin has been enabled.");
     }

@@ -1,9 +1,14 @@
 package gg.tjr.mc.xrayalerts.listeners;
 
+import gg.tjr.mc.xrayalerts.Settings;
+import gg.tjr.mc.xrayalerts.Settings.AlertMode;
 import gg.tjr.mc.xrayalerts.XRayAlertsPlugin;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,42 +16,38 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
-
 public class OreMineListener implements Listener {
 
     private final Plugin plugin = XRayAlertsPlugin.getInstance();
-    private final FileConfiguration config = plugin.getConfig();
 
+    private final Settings settings;
     private final Map<Block, Long> processedBlocks = new HashMap<>();
     private final long processedBlocksCleanupInterval = 1000*60*5;
 
-    public OreMineListener() {
+    public OreMineListener(Settings settings) {
         new BukkitRunnable() {
             @Override
             public void run() {
                 cleanupProcessedBlocks();
             }
         }.runTaskTimer(plugin, 20 * 60, 20 * 60);
+        this.settings = settings;
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
-        Material blockMaterial = block.getType();
 
         if (player.hasPermission("xrayalerts.ignore")) {
             return;
         }
 
-        List<String> monitoredBlocks = config.getStringList("monitored-blocks");
-
-        if (monitoredBlocks.contains(blockMaterial.name())) {
-            String mode = config.getString("mode", "block");
+        if (this.settings.isMonitoredBlock(block)) {
+            Material blockMaterial = block.getType();
             int count;
 
-            if (mode.equalsIgnoreCase("vein")) {
+            if (this.settings.getAlertMode() == AlertMode.VEIN) {
                 if (processedBlocks.containsKey(block)) {
                     return;
                 }
@@ -60,18 +61,39 @@ public class OreMineListener implements Listener {
                 count = event.getBlock().getDrops(player.getInventory().getItemInMainHand()).size();
             }
 
-            String messageFormat = config.getString("alert-message", "&c&lX-Ray&r &7%player% found &6x%count% %item%.");
-            String message = messageFormat
-                    .replace("%count%", String.valueOf(count))
-                    .replace("%item%", blockMaterial.name().toLowerCase().replace("_", " "))
-                    .replace("%player%", player.getName())
-                    .replace("&", "§");
-
+            String message = formatPlayerMessage(block, blockMaterial, player, count);
             plugin.getServer().getOnlinePlayers().stream()
-                    .filter(p -> p.hasPermission("xrayalerts.receive"))
-                    .filter(p -> config.getBoolean("alerts." + p.getUniqueId(), true))
+                    .filter(this::isAlertable)
                     .forEach(p -> p.sendMessage(message));
+
+            if (this.settings.logAlerts()) {
+                String logMessage = formatLogMessage(block, blockMaterial, player, count);
+                plugin.getLogger().info(logMessage);
+            }
         }
+    }
+
+    private boolean isAlertable(Player p) {
+        return p.hasPermission("xrayalerts.receive")
+            && this.settings.inAlertSet(p);
+    }
+
+    private String formatPlayerMessage(Block block, Material blockMaterial, Player player, int count) {
+        return formatMessage(this.settings.getMessageFormat(), block, blockMaterial, player, count);
+    }
+
+    private String formatLogMessage(Block block, Material blockMaterial, Player player, int count) {
+        return formatMessage(this.settings.getLogFormat(), block, blockMaterial, player, count);
+    }
+
+    private String formatMessage(String string, Block block, Material blockMaterial, Player player, int count) {
+        return string
+            .replace("%count%", String.valueOf(count))
+            .replace("%item%", blockMaterial.name().toLowerCase().replace("_", " "))
+            .replace("%player%", player.getName())
+            .replace("%blockX%", String.valueOf(block.getX()))
+            .replace("%blockY%", String.valueOf(block.getY()))
+            .replace("%blockZ%", String.valueOf(block.getZ()));
     }
 
     private Set<Block> findVein(Block startBlock, Material material) {
@@ -97,14 +119,14 @@ public class OreMineListener implements Listener {
     }
 
     private Set<Block> getAdjacentBlocks(Block block) {
-        Set<Block> adjacent = new HashSet<>();
-        adjacent.add(block.getRelative(1, 0, 0));
-        adjacent.add(block.getRelative(-1, 0, 0));
-        adjacent.add(block.getRelative(0, 1, 0));
-        adjacent.add(block.getRelative(0, -1, 0));
-        adjacent.add(block.getRelative(0, 0, 1));
-        adjacent.add(block.getRelative(0, 0, -1));
-        return adjacent;
+        return Set.of(
+            block.getRelative(1, 0, 0),
+            block.getRelative(-1, 0, 0),
+            block.getRelative(0, 1, 0),
+            block.getRelative(0, -1, 0),
+            block.getRelative(0, 0, 1),
+            block.getRelative(0, 0, -1)
+        );
     }
 
     private void cleanupProcessedBlocks() {

@@ -1,6 +1,10 @@
-alert-message: "&c&lX-Ray&r &7%player% found &6%count% %item%."
+alert-message: "&c&lX-Ray&r &7%player% found &6%count% %item% at (%blockX%, %blockY%, %blockZ%)."
+alert-log: "%player% found %count% %item% at (%blockX%, %blockY%, %blockZ%)."
 
-mode: "block" # Options: "block", "vein"
+mode: "BLOCK" # Options: "BLOCK", "VEIN".
+
+# Log X-ray alert notifications.
+log: true
 
 monitored-blocks:
   - ANCIENT_DEBRIS
