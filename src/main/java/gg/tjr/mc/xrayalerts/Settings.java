@@ -12,11 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class Settings {
     private final FileConfiguration config;
-    private Set<String> alertSet;
-    private final String messageFormat;
-    private final boolean logAlerts;
-    private final String logFormat;
-    private final AlertMode mode;
+    private final Set<String> alertSet;
     private final Set<String> monitoredBlocks;
 
     public enum AlertMode {
@@ -26,16 +22,6 @@ public class Settings {
 
     public Settings(@NotNull FileConfiguration config) {
         this.config = config;
-        this.messageFormat = config.getString(
-            "alert-message",
-            "&c&lX-Ray&r &7%player% found &6%count% %item% at (%blockX%, %blockY%, %blockZ%)."
-        ).replace("&", "§");
-        this.logFormat = config.getString(
-            "alert-log",
-            "%player% found %count% %item% at (%blockX%, %blockY%, %blockZ%)."
-        );
-        this.mode = AlertMode.valueOf(config.getString("mode", "BLOCK"));
-        this.logAlerts = config.getBoolean("log");
         this.monitoredBlocks = Set.copyOf(config.getStringList("monitored-blocks"));
 
         ConfigurationSection alertsSection = config.getConfigurationSection("alerts");
@@ -79,19 +65,25 @@ public class Settings {
     }
 
     public AlertMode getAlertMode() {
-        return this.mode;
+        return AlertMode.valueOf(config.getString("mode", "BLOCK"));
     }
 
     public boolean logAlerts() {
-        return this.logAlerts;
+        return this.config.getBoolean("log");
     }
 
     public String getMessageFormat() {
-        return this.messageFormat;
+        return this.config.getString(
+            "alert-message",
+            "&c&lX-Ray&r &7%player% found &6%count% %item% at (%blockX%, %blockY%, %blockZ%)."
+        ).replace("&", "§");
     }
 
     public String getLogFormat() {
-        return this.logFormat;
+        return config.getString(
+            "alert-log",
+            "%player% found %count% %item% at (%blockX%, %blockY%, %blockZ%)."
+        );
     }
 
     public boolean isInAlertsSection(Player p) {
